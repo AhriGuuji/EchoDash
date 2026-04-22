@@ -442,6 +442,7 @@ GameObject:
   - component: {fileID: 871255882}
   - component: {fileID: 871255881}
   - component: {fileID: 871255884}
+  - component: {fileID: 871255885}
   m_Layer: 0
   m_Name: Bat
   m_TagString: Untagged
@@ -567,6 +568,22 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 0
+--- !u!114 &871255885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871255880}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96e8bba99270e0d4c8d952884d2c4bd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Shooting
+  projectilprefab: {fileID: 2056637168768329579, guid: 69a6d3e017d30804aa7194184b92d83a, type: 3}
+  speed: 250
+  offset: {x: 40, y: 0}
+  inputName: Jump
 --- !u!1 &1200651436
 GameObject:
   m_ObjectHideFlags: 0
