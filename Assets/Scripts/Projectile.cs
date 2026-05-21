@@ -9,7 +9,7 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (hitSound != null) AudioSource.PlayClipAtPoint(hitSound, transform.position, 1); 
+        if (hitSound != null) AudioSource.PlayClipAtPoint(hitSound, transform.position); 
 
         Destroy(gameObject);
     }
