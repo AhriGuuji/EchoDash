@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class Tutorial : MonoBehaviour
@@ -45,7 +46,12 @@ public class Tutorial : MonoBehaviour
     private float obstacleTime = 3f;
     private float waitTimer = 0f;
     private string lastSound = "";
-    private bool isFrozen = false;  // NEW: Track if game is frozen
+    private bool isFrozen = false;
+    
+    // Input Actions
+    private InputAction spaceAction;
+    private InputAction aAction;
+    private InputAction sAction;
     
     // Audio clip indices
     private enum NarrationType
@@ -65,97 +71,170 @@ public class Tutorial : MonoBehaviour
         if (narrationClips == null || narrationClips.Length == 0)
             Debug.LogWarning("Tutorial: No narration clips assigned.");
         
+        SetupInputActions();
         StartCoroutine(TutorialFlow());
     }
     
+    void SetupInputActions()
+    {
+        // Create input actions
+        spaceAction = new InputAction("Space", binding: "<Keyboard>/space");
+        aAction = new InputAction("A", binding: "<Keyboard>/a");
+        sAction = new InputAction("S", binding: "<Keyboard>/s");
+        
+        // Enable all actions
+        spaceAction.Enable();
+        aAction.Enable();
+        sAction.Enable();
+        
+        // Add callbacks
+        spaceAction.performed += OnSpacePerformed;
+        aAction.performed += OnAPerformed;
+        aAction.canceled += OnACanceled;
+        sAction.performed += OnSPerformed;
+        sAction.canceled += OnSCanceled;
+    }
+    
+    void OnDestroy()
+    {
+        // Clean up input actions
+        spaceAction?.Dispose();
+        aAction?.Dispose();
+        sAction?.Dispose();
+    }
+    
     void Update()
-{
-    if (!tutorialActive) return;
-    
-    // Don't process input if game is frozen
-    if (isFrozen) return;
-    
-    // Handle spacebar input
-    if (waitingForSound && Input.GetKeyDown(KeyCode.Space))
     {
-        CancelInvoke();
-        LaunchSound();
-    }
-    
-    // Handle up key (A)
-    if (waitingForUp)
-    {
-        if (Input.GetKey(KeyCode.A))
+        if (!tutorialActive) return;
+        if (isFrozen) return;
+        
+        // Update key press states for holding
+        if (waitingForUp)
         {
-            if (!keyIsPressed)
+            bool isAHeld = aAction.IsPressed();
+            
+            if (isAHeld)
             {
-                keyIsPressed = true;
-                correctKeyPressed = true;
-                OnRequireUp?.Invoke();
-                PlayNarration(NarrationType.SuccessUp);
+                if (!keyIsPressed)
+                {
+                    keyIsPressed = true;
+                    correctKeyPressed = true;
+                    OnRequireUp?.Invoke();
+                    PlayNarration(NarrationType.SuccessUp);
+                }
             }
             
-            // Check if key was released too early
-            if (Input.GetKeyUp(KeyCode.A) && !HasObstaclePassed())
+            if (keyIsPressed && HasObstaclePassed())
             {
-                OnReleaseUpEarly?.Invoke();
-                PlayNarration(NarrationType.WrongReleaseUp);
-                FreezeGame();
+                waitingForUp = false;
+                keyIsPressed = false;
+                correctKeyPressed = true;
             }
         }
         
-        // NEW: Check if obstacle has passed while holding the key
-        if (keyIsPressed && HasObstaclePassed())
+        // Handle down key (S) holding
+        if (waitingForDown)
         {
-            // Success! Obstacle passed, tutorial can continue
-            waitingForUp = false;
-            keyIsPressed = false;
-            correctKeyPressed = true;
-        }
-    }
-    
-    // Handle down key (S)
-    if (waitingForDown)
-    {
-        if (Input.GetKey(KeyCode.S))
-        {
-            if (!keyIsPressed)
+            bool isSHeld = sAction.IsPressed();
+            
+            if (isSHeld)
             {
-                keyIsPressed = true;
-                correctKeyPressed = true;
-                OnRequireDown?.Invoke();
-                PlayNarration(NarrationType.SuccessDown);
+                if (!keyIsPressed)
+                {
+                    keyIsPressed = true;
+                    correctKeyPressed = true;
+                    OnRequireDown?.Invoke();
+                    PlayNarration(NarrationType.SuccessDown);
+                }
             }
             
-            if (Input.GetKeyUp(KeyCode.S) && !HasObstaclePassed())
+            if (keyIsPressed && HasObstaclePassed())
             {
-                OnReleaseDownEarly?.Invoke();
-                PlayNarration(NarrationType.WrongReleaseDown);
-                FreezeGame();
+                waitingForDown = false;
+                keyIsPressed = false;
+                correctKeyPressed = true;
             }
         }
         
-        // NEW: Check if obstacle has passed while holding the key
-        if (keyIsPressed && HasObstaclePassed())
+        // Timer for spacebar wait
+        if (waitingForSound && waitTimer > 0)
         {
-            // Success! Obstacle passed, tutorial can continue
-            waitingForDown = false;
-            keyIsPressed = false;
-            correctKeyPressed = true;
+            waitTimer -= Time.unscaledDeltaTime;
+            if (waitTimer <= 0)
+            {
+                // Update UI before freezing
+                if (narratorText != null)
+                {
+                    narratorText.text = GetNarrationText(NarrationType.FreezeWait);
+                    narratorText.ForceMeshUpdate();
+                }
+                
+                PlayNarration(NarrationType.FreezeWait);
+                FreezeGame();
+            }
         }
     }
     
-    // Timer for spacebar wait (5 seconds)
-    if (waitingForSound && waitTimer > 0)
+    void OnSpacePerformed(InputAction.CallbackContext context)
     {
-        waitTimer -= Time.unscaledDeltaTime;
-        if (waitTimer <= 0)
+        if (!tutorialActive) return;
+        if (isFrozen) return;
+        
+        if (waitingForSound)
         {
-            PlayNarration(NarrationType.FreezeWait);
+            CancelInvoke();
+            LaunchSound();
+        }
+    }
+    
+    void OnAPerformed(InputAction.CallbackContext context)
+    {
+        if (!tutorialActive) return;
+        if (isFrozen) return;
+        
+        if (waitingForUp)
+        {
+            // First press is handled in Update for holding logic
+            // This just ensures we capture the press
+        }
+    }
+    
+    void OnACanceled(InputAction.CallbackContext context)
+    {
+        if (!tutorialActive) return;
+        if (isFrozen) return;
+        
+        if (waitingForUp && keyIsPressed && !HasObstaclePassed())
+        {
+            OnReleaseUpEarly?.Invoke();
+            PlayNarration(NarrationType.WrongReleaseUp);
             FreezeGame();
         }
     }
-}
+    
+    void OnSPerformed(InputAction.CallbackContext context)
+    {
+        if (!tutorialActive) return;
+        if (isFrozen) return;
+        
+        if (waitingForDown)
+        {
+            // First press is handled in Update for holding logic
+        }
+    }
+    
+    void OnSCanceled(InputAction.CallbackContext context)
+    {
+        if (!tutorialActive) return;
+        if (isFrozen) return;
+        
+        if (waitingForDown && keyIsPressed && !HasObstaclePassed())
+        {
+            OnReleaseDownEarly?.Invoke();
+            PlayNarration(NarrationType.WrongReleaseDown);
+            FreezeGame();
+        }
+    }
     
     IEnumerator TutorialFlow()
     {
@@ -163,14 +242,13 @@ public class Tutorial : MonoBehaviour
         PlayNarration(NarrationType.Intro);
         yield return new WaitForSecondsRealtime(GetClipLength(NarrationType.Intro));
         
-        // First sound
+        // First sound - HIGH PITCH
         PlayNarration(NarrationType.PressSpace);
         waitingForSound = true;
         waitTimer = spacebarWaitTime;
         
         yield return new WaitUntil(() => !waitingForSound);
         
-        // Sound hits obstacle - HIGH PITCH
         PlayHighPitchSound();
         CalculateObstacleDistance();
         PlayNarration(NarrationType.GoodObstacleHigh);
@@ -178,7 +256,6 @@ public class Tutorial : MonoBehaviour
         
         waitingForUp = true;
         yield return new WaitForSecondsRealtime(1f);
-        
         yield return new WaitUntil(() => !waitingForUp);
         
         if (!correctKeyPressed)
@@ -191,7 +268,7 @@ public class Tutorial : MonoBehaviour
         
         PlaySuccessSound();
         
-        // LOW PITCH SOUND
+        // Second sound - LOW PITCH
         PlayNarration(NarrationType.GoodObstacleLow);
         yield return new WaitForSecondsRealtime(GetClipLength(NarrationType.GoodObstacleLow));
         
@@ -226,7 +303,6 @@ public class Tutorial : MonoBehaviour
         if (narratorText != null) narratorText.gameObject.SetActive(false);
         if (keyHintText != null) keyHintText.text = "A ▲ | S ▼ | Space 🔊";
         
-        // Unfreeze time before completing tutorial
         Time.timeScale = 1f;
         isFrozen = false;
         
@@ -238,7 +314,6 @@ public class Tutorial : MonoBehaviour
         waitingForSound = false;
         waitTimer = 0;
         
-        // Alternate between high and low pitch
         if (lastSound == "" || lastSound == "low")
         {
             lastSound = "high";
@@ -281,23 +356,31 @@ public class Tutorial : MonoBehaviour
         if (isFrozen) return;
         
         isFrozen = true;
-        Time.timeScale = 0f;  // FREEZE the game
-        StartCoroutine(UnfreezeAfterMessage());
+        Time.timeScale = 0f;
+        
+        StartCoroutine(WaitForPlayerUnfreeze());
     }
     
-    IEnumerator UnfreezeAfterMessage()
+    IEnumerator WaitForPlayerUnfreeze()
     {
-        yield return new WaitForSecondsRealtime(3f);
+        // Wait until player presses Space (works during freeze)
+        while (!spaceAction.WasPressedThisFrame())
+        {
+            yield return new WaitForSecondsRealtime(0.05f);
+        }
         
-        Time.timeScale = 1f;  // UNFREEZE the game
+        // Unfreeze
+        Time.timeScale = 1f;
         isFrozen = false;
-        
-        // Reset states
-        if (waitingForUp) waitingForUp = true;
-        if (waitingForDown) waitingForDown = true;
-        if (waitingForSound) waitingForSound = true;
-        
         keyIsPressed = false;
+        
+        // Handle the state that caused the freeze
+        if (waitingForSound)
+        {
+            // Player pressed Space - continue with the sound
+            waitingForSound = false;
+            LaunchSound();
+        }
     }
     
     void FailGame(string reason)

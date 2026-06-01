@@ -1,12 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering.Universal;
 
 public class Shooting : MonoBehaviour
 {
     [SerializeField] private GameObject projectilPrefab;
     [SerializeField] private float speed;
-    [SerializeField] private Vector2 offset = new Vector2(1f, 0f);
+    [SerializeField] private Transform offset;
     [SerializeField] private string inputName;
     [SerializeField] private AudioClip sound;
     [Header("Flash Setts")]
@@ -31,7 +30,7 @@ public class Shooting : MonoBehaviour
 
     private void Shoot()
     {
-        Vector2 spawn = (Vector2)transform.position + offset;
+        Vector2 spawn = offset.position;
 
         GameObject projectile = Instantiate(projectilPrefab, spawn, transform.rotation);
 
@@ -41,7 +40,7 @@ public class Shooting : MonoBehaviour
             _rb.linearVelocity = transform.right * speed;
         }
 
-        if (sound) AudioSource.PlayClipAtPoint(sound, transform.position);
+        if (sound) AudioSource.PlayClipAtPoint(sound, transform.position, 0.2f);
         if (lightAnim) lightAnim.SetTrigger(lightAnimName);
     }
 }

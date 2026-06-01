@@ -3,13 +3,23 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
-    [SerializeField] private AudioClip hitSound;
+    [SerializeField] private AudioClip highSound, lowSound;
     [SerializeField] private float lifespan;
+    [SerializeField] private LayerMask high, low;
     private float _timer;
+    private Vector3 _initPos;
+
+    private void Awake()
+    {
+        _initPos = transform.position;
+    }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (hitSound != null) AudioSource.PlayClipAtPoint(hitSound, transform.position); 
+        if (collision.gameObject.TryGetComponent(out HighPich _)) 
+        { AudioSource.PlayClipAtPoint(highSound, _initPos); }
+        
+        if (collision.gameObject.TryGetComponent(out LowPich _))  AudioSource.PlayClipAtPoint(lowSound, _initPos); 
 
         Destroy(gameObject);
     }

@@ -43,20 +43,6 @@ public class Movement : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (tutorialControlActive)
-        {
-            // Tutorial forcing movement
-            if (forceUp)
-            {
-                _rb.MovePosition(topTarget.position);
-            }
-            else if (forceDown)
-            {
-                _rb.MovePosition(botTarget.position);
-            }
-        }
-        else
-        {
             // Normal gameplay movement
             float dir = _input.ReadValue<Vector2>().y;
 
@@ -73,7 +59,6 @@ public class Movement : MonoBehaviour
                 _rb.MovePosition(_ogPos);
             }
             // No input - bat stays where it is
-        }
     }
     
     // ============ TUTORIAL EVENT HANDLERS ============
