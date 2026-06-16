@@ -9,9 +9,6 @@ public class Movement : MonoBehaviour
     private Rigidbody2D _rb;
     private InputAction _input;
     private Vector3 _ogPos;
-    
-    // Tutorial state
-    private bool tutorialMode = true;
 
     private void Start()
     {
