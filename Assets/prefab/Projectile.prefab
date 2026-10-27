@@ -106,8 +106,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e736e8561ec0bdd42ac2c04a831ca794, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
-  highSound: {fileID: 8300000, guid: 4714087f9bf6bf04d8c4325d38251e54, type: 3}
-  lowSound: {fileID: 8300000, guid: 3fc37850b0d99ce4499f83d061b5ad5f, type: 3}
+  highSound: {fileID: 8300000, guid: eb287805b4a4abf4b93ea69fbca899b7, type: 3}
+  lowSound: {fileID: 8300000, guid: 2c3310a19a455d64897f4c39fa93fb6a, type: 3}
   lifespan: 5
   high:
     serializedVersion: 2
@@ -115,6 +115,7 @@ MonoBehaviour:
   low:
     serializedVersion: 2
     m_Bits: 64
+  <AudioSource>k__BackingField: {fileID: 0}
 --- !u!50 &6505584122780047910
 Rigidbody2D:
   serializedVersion: 5
